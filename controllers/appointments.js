@@ -3,11 +3,29 @@ const { StatusCodes } = require("http-status-codes");
 const { BadRequestError, NotFoundError } = require("../errors");
 
 const getAllAppointments = async (req, res) => {
-  res.send("Get All Appointments");
+  const appointments = await Appointment.find({
+    $or: [{ patient: req.user.userId }, { doctor: req.user.userId }],
+  }).sort("date");
+
+  res.json({ appointments, count: appointments.length });
 };
 
 const getAppointment = async (req, res) => {
-  res.send("Get Single Appointment");
+  const {
+    user: { userId },
+    params: { id: appointmentId },
+  } = req;
+
+  const appointment = await Appointment.findOne({
+    _id: appointmentId,
+    $or: [{ patient: req.user.userId }, { doctor: req.user.userId }],
+  });
+
+  if (!appointment) {
+    throw new NotFoundError(`No appointment with id ${appointmentId}`);
+  }
+
+  res.json({ appointment });
 };
 
 const createAppointment = async (req, res) => {
@@ -17,11 +35,46 @@ const createAppointment = async (req, res) => {
 };
 
 const updateAppointment = async (req, res) => {
-  res.send("Update Appointment");
+  const {
+    user: { userId },
+    params: { id: appointmentId },
+  } = req;
+
+  const appointment = await Appointment.findOneAndUpdate(
+    {
+      _id: appointmentId,
+      $or: [{ patient: req.user.userId }, { doctor: req.user.userId }],
+    },
+    req.body,
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+  if (!appointment) {
+    throw new NotFoundError(`No appointment with id ${appointmentId}`);
+  }
+
+  res.json({ appointment });
 };
 
 const deleteAppointment = async (req, res) => {
-  res.send("Delete Appointment");
+  const {
+    user: { userId },
+    params: { id: appointmentId },
+  } = req;
+
+  const appointment = await Appointment.findOneAndRemove({
+    _id: appointmentId,
+    $or: [{ patient: req.user.userId }, { doctor: req.user.userId }],
+  });
+
+  if (!appointment) {
+    throw new NotFoundError(`No appointment with id ${appointmentId}`);
+  }
+
+  res.json();
 };
 
 module.exports = {
