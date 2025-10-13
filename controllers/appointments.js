@@ -74,7 +74,7 @@ const deleteAppointment = async (req, res) => {
     throw new NotFoundError(`No appointment with id ${appointmentId}`);
   }
 
-  res.json();
+  res.json({ msg: "The entry was deleted." });
 };
 
 module.exports = {
